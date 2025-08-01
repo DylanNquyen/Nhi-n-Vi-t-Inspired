@@ -1,20 +1,4 @@
-// Mobile Menu Toggle
-const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-const navMenu = document.querySelector('.nav-menu');
-
-if (mobileMenuBtn && navMenu) {
-    mobileMenuBtn.addEventListener('click', () => {
-        navMenu.classList.toggle('active');
-    });
-}
-
-// Close mobile menu when clicking on a link
-const navLinks = document.querySelectorAll('.nav-menu a');
-navLinks.forEach(link => {
-    link.addEventListener('click', () => {
-        navMenu.classList.remove('active');
-    });
-});
+// Mobile Menu functionality is handled by the Enhanced MobileMenu class below
 
 // Smooth scrolling for anchor links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -26,6 +10,19 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
                 behavior: 'smooth',
                 block: 'start'
             });
+        }
+    });
+});
+
+// Close mobile menu when clicking on a link
+const navLinks = document.querySelectorAll('.nav-menu a');
+navLinks.forEach(link => {
+    link.addEventListener('click', () => {
+        const navMenu = document.querySelector('.nav-menu');
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+        if (navMenu && mobileMenuBtn) {
+            navMenu.classList.remove('active');
+            mobileMenuBtn.classList.remove('active');
         }
     });
 });
@@ -542,8 +539,10 @@ class MobileMenu {
     }
 }
 
-// Initialize Mobile Menu
-const mobileMenu = new MobileMenu();
+// Initialize Mobile Menu after DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    const mobileMenu = new MobileMenu();
+});
 
 // Add CSS animations
 const style = document.createElement('style');
