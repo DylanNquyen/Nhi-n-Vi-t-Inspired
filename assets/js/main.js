@@ -78,41 +78,101 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Form validation and submission
-const contactForm = document.querySelector('.contact-form form');
-if (contactForm) {
-    contactForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        // Basic form validation
-        const name = this.querySelector('input[name="name"]').value.trim();
-        const email = this.querySelector('input[name="email"]').value.trim();
-        const message = this.querySelector('textarea[name="message"]').value.trim();
-        
-        if (!name || !email || !message) {
-            alert('Vui lòng điền đầy đủ thông tin!');
-            return;
-        }
-        
-        if (!isValidEmail(email)) {
-            alert('Vui lòng nhập email hợp lệ!');
-            return;
-        }
-        
-        // Simulate form submission
-        const submitBtn = this.querySelector('button[type="submit"]');
-        const originalText = submitBtn.textContent;
-        submitBtn.textContent = 'Đang gửi...';
-        submitBtn.disabled = true;
-        
-        setTimeout(() => {
-            alert('Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi sớm nhất có thể.');
-            this.reset();
-            submitBtn.textContent = originalText;
-            submitBtn.disabled = false;
-        }, 2000);
-    });
-}
+// Enhanced Form validation and email submission
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Email Service
+    const emailService = new EmailService();
+    
+    // Show configuration instructions if not configured
+    if (!emailService.isConfigured()) {
+        console.warn('EmailJS chưa được cấu hình!');
+        emailService.showConfigInstructions();
+    }
+    
+    const contactForm = document.querySelector('.contact-form form');
+    if (contactForm) {
+        contactForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Get form data
+            const formData = {
+                name: this.querySelector('input[name="name"]').value.trim(),
+                email: this.querySelector('input[name="email"]').value.trim(),
+                phone: this.querySelector('input[name="phone"]').value.trim(),
+                service: this.querySelector('select[name="service"]').value,
+                message: this.querySelector('textarea[name="message"]').value.trim()
+            };
+            
+            // Validate required fields
+            if (!formData.name || !formData.email || !formData.message) {
+                if (typeof toast !== 'undefined') {
+                    toast.show('Vui lòng điền đầy đủ thông tin bắt buộc!', 'error');
+                } else {
+                    alert('Vui lòng điền đầy đủ thông tin bắt buộc!');
+                }
+                return;
+            }
+            
+            // Validate email format
+            if (!isValidEmail(formData.email)) {
+                if (typeof toast !== 'undefined') {
+                    toast.show('Vui lòng nhập email hợp lệ!', 'error');
+                } else {
+                    alert('Vui lòng nhập email hợp lệ!');
+                }
+                return;
+            }
+            
+            // Show loading state
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang gửi...';
+            submitBtn.disabled = true;
+            
+            try {
+                // Send email
+                const result = await emailService.sendContactEmail(formData);
+                
+                if (result.success) {
+                    // Success
+                    if (typeof toast !== 'undefined') {
+                        toast.show('Cảm ơn bạn đã liên hệ! Email đã được gửi thành công. Chúng tôi sẽ phản hồi sớm nhất có thể.', 'success', 5000);
+                    } else {
+                        alert('Cảm ơn bạn đã liên hệ! Email đã được gửi thành công. Chúng tôi sẽ phản hồi sớm nhất có thể.');
+                    }
+                    
+                    // Reset form
+                    this.reset();
+                    
+                    // Reset floating labels if they exist
+                    const floatingLabels = this.querySelectorAll('.floating-label.active');
+                    floatingLabels.forEach(label => label.classList.remove('active'));
+                    
+                } else {
+                    // Error
+                    if (typeof toast !== 'undefined') {
+                        toast.show(result.message, 'error');
+                    } else {
+                        alert(result.message);
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Form submission error:', error);
+                
+                if (typeof toast !== 'undefined') {
+                    toast.show('Có lỗi xảy ra khi gửi email. Vui lòng thử lại sau.', 'error');
+                } else {
+                    alert('Có lỗi xảy ra khi gửi email. Vui lòng thử lại sau.');
+                }
+            } finally {
+                // Restore button state
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+    }
+});
 
 // Email validation function
 function isValidEmail(email) {
