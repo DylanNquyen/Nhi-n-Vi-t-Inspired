@@ -417,6 +417,15 @@ class FormHandler {
             return;
         }
 
+        // Collect form data
+        const formData = {
+            name: form.querySelector('input[name="name"]').value.trim(),
+            email: form.querySelector('input[name="email"]').value.trim(),
+            phone: form.querySelector('input[name="phone"]').value.trim(),
+            service: form.querySelector('select[name="service"]').value,
+            message: form.querySelector('textarea[name="message"]').value.trim()
+        };
+
         // Show loading state
         const submitBtn = form.querySelector('button[type="submit"]');
         const originalText = submitBtn.textContent || submitBtn.innerText;
@@ -424,19 +433,44 @@ class FormHandler {
         submitBtn.disabled = true;
 
         try {
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            toast.show('Gửi tin nhắn thành công! Chúng tôi sẽ phản hồi sớm nhất.', 'success');
-            form.reset();
-            
-            // Reset floating labels
-            form.querySelectorAll('.floating-label').forEach(label => {
-                label.classList.remove('active');
+            // Send to backend API
+            const response = await fetch('/send-contact', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
             });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                toast.show(result.message || 'Gửi tin nhắn thành công! Chúng tôi sẽ phản hồi sớm nhất.', 'success');
+                form.reset();
+                
+                // Reset floating labels
+                form.querySelectorAll('.floating-label').forEach(label => {
+                    label.classList.remove('active');
+                });
+            } else {
+                throw new Error(result.message || 'Có lỗi xảy ra khi gửi tin nhắn');
+            }
             
         } catch (error) {
-            toast.show('Có lỗi xảy ra. Vui lòng thử lại.', 'error');
+            console.error('Contact form error:', error);
+            
+            // Show user-friendly error message
+            let errorMessage = 'Có lỗi xảy ra khi gửi tin nhắn. ';
+            
+            if (error.message.includes('fetch')) {
+                errorMessage += 'Vui lòng kiểm tra kết nối internet và thử lại.';
+            } else if (error.message) {
+                errorMessage = error.message;
+            } else {
+                errorMessage += 'Vui lòng thử lại sau ít phút hoặc liên hệ trực tiếp qua điện thoại: 0347 965 648';
+            }
+            
+            toast.show(errorMessage, 'error');
         } finally {
             // Khôi phục button state
             submitBtn.innerHTML = originalText;
@@ -558,7 +592,7 @@ class MobileMenu {
 // Initialize Mobile Menu
 const mobileMenu = new MobileMenu();
 
-// Add CSS animations
+// Add CSS animations and toast styles
 const style = document.createElement('style');
 style.textContent = `
     @keyframes slideInRight {
@@ -575,6 +609,17 @@ style.textContent = `
     @keyframes fadeIn {
         from { opacity: 0; }
         to { opacity: 1; }
+    }
+    
+    @keyframes slideInFromRight {
+        from {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
     }
     
     .floating-label {
@@ -607,6 +652,60 @@ style.textContent = `
     
     .fade-in {
         animation: fadeIn 0.5s ease;
+    }
+    
+    /* Toast Notifications */
+    .toast {
+        background: #2d5a27;
+        color: white;
+        padding: 16px 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        min-width: 300px;
+        max-width: 400px;
+        opacity: 0;
+        transform: translateX(100%);
+        transition: all 0.3s ease;
+        border-left: 4px solid #f4c430;
+        font-weight: 500;
+        line-height: 1.4;
+    }
+    
+    .toast.show {
+        opacity: 1;
+        transform: translateX(0);
+        animation: slideInFromRight 0.3s ease;
+    }
+    
+    .toast.success {
+        background: linear-gradient(135deg, #2d5a27, #4a8c3a);
+        border-left-color: #f4c430;
+    }
+    
+    .toast.error {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        border-left-color: #ffc107;
+    }
+    
+    .toast.info {
+        background: linear-gradient(135deg, #17a2b8, #138496);
+        border-left-color: #f4c430;
+    }
+    
+    @media (max-width: 768px) {
+        .toast {
+            min-width: 280px;
+            max-width: calc(100vw - 40px);
+            margin: 0 20px;
+        }
+        
+        #toast-container {
+            right: 0 !important;
+            left: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
     }
 `;
 document.head.appendChild(style); 
