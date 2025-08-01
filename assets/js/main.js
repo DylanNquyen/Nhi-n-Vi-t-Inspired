@@ -1,20 +1,33 @@
-// Mobile Menu Toggle
-const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-const navMenu = document.querySelector('.nav-menu');
+// // Mobile Menu Toggle
+// const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+// const navMenu = document.querySelector('.nav-menu');
 
-if (mobileMenuBtn && navMenu) {
-    mobileMenuBtn.addEventListener('click', () => {
-        navMenu.classList.toggle('active');
-    });
-}
+// if (mobileMenuBtn && navMenu) {
+//     mobileMenuBtn.addEventListener('click', () => {
+//         navMenu.classList.toggle('active');
+//     });
+// }
 
-// Close mobile menu when clicking on a link
-const navLinks = document.querySelectorAll('.nav-menu a');
-navLinks.forEach(link => {
-    link.addEventListener('click', () => {
-        navMenu.classList.remove('active');
-    });
+// // Close mobile menu when clicking on a link
+// const navLinks = document.querySelectorAll('.nav-menu a');
+// navLinks.forEach(link => {
+//     link.addEventListener('click', () => {
+//         navMenu.classList.remove('active');
+//     });
+// });
+document.addEventListener('DOMContentLoaded', () => {
+    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+    const navMenu = document.querySelector('.nav-menu');
+
+    if (mobileMenuBtn && navMenu) {
+        mobileMenuBtn.addEventListener('click', () => {
+            navMenu.classList.toggle('active');
+        });
+    } else {
+        console.warn('Không tìm thấy phần tử menu hoặc nút bấm.');
+    }
 });
+
 
 // Smooth scrolling for anchor links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
