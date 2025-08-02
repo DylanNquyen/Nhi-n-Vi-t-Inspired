@@ -275,11 +275,18 @@ const toast = new Toast();
 
 
 
-// Enhanced Form Handling with Better UX
-class FormHandler {
+// Enhanced Form Handling with EmailJS Integration
+class EmailFormHandler {
     constructor() {
         this.forms = document.querySelectorAll('form');
+        this.initEmailJS();
         this.init();
+    }
+
+    initEmailJS() {
+        // Initialize EmailJS with your public key
+        // Replace 'YOUR_PUBLIC_KEY' with your actual EmailJS public key
+        emailjs.init('is48xsDmZIpobLamF');
     }
 
     init() {
@@ -302,8 +309,8 @@ class FormHandler {
             input.addEventListener('input', () => this.clearFieldError(input));
         });
 
-        // Enhanced form submission
-        form.addEventListener('submit', (e) => this.handleSubmit(e, form));
+        // Enhanced form submission with EmailJS
+        form.addEventListener('submit', (e) => this.handleEmailSubmit(e, form));
     }
 
     addFloatingLabel(input) {
@@ -383,7 +390,7 @@ class FormHandler {
         return /^[\+]?[0-9\s\-\(\)]{10,}$/.test(phone);
     }
 
-    async handleSubmit(e, form) {
+    async handleEmailSubmit(e, form) {
         e.preventDefault();
         
         // Validate all fields
@@ -408,10 +415,35 @@ class FormHandler {
         submitBtn.disabled = true;
 
         try {
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            toast.show('Gửi tin nhắn thành công! Chúng tôi sẽ phản hồi sớm nhất.', 'success');
+            // Collect form data
+            const formData = {
+                from_name: form.querySelector('input[name="name"]').value,
+                from_email: form.querySelector('input[name="email"]').value,
+                phone: form.querySelector('input[name="phone"]').value || 'Không cung cấp',
+                service: form.querySelector('select[name="service"]').value || 'Không chọn',
+                message: form.querySelector('textarea[name="message"]').value,
+                date: new Date().toLocaleString('vi-VN')
+            };
+
+            // Get service name in Vietnamese
+            const serviceNames = {
+                'food': 'Dịch vụ ăn uống',
+                'tour': 'Tour du lịch',
+                'flight': 'Vé máy bay',
+                'visa': 'Visa & Passport'
+            };
+            formData.service_name = serviceNames[formData.service] || 'Không chọn';
+
+            // Send email using EmailJS
+            // Replace 'YOUR_SERVICE_ID' and 'YOUR_TEMPLATE_ID' with your actual EmailJS configuration
+            const response = await emailjs.send(
+                'service_h6gjilr',
+                'template_b4lngg8',
+                formData
+            );
+
+            console.log('Email sent successfully:', response);
+            toast.show('Gửi tin nhắn thành công! Chúng tôi sẽ phản hồi sớm nhất.', 'success', 5000);
             form.reset();
             
             // Reset floating labels
@@ -420,17 +452,18 @@ class FormHandler {
             });
             
         } catch (error) {
-            toast.show('Có lỗi xảy ra. Vui lòng thử lại.', 'error');
+            console.error('Email sending failed:', error);
+            toast.show('Có lỗi xảy ra khi gửi email. Vui lòng thử lại hoặc liên hệ trực tiếp qua điện thoại.', 'error', 6000);
         } finally {
-            // Khôi phục button state
+            // Restore button state
             submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
         }
     }
 }
 
-// Initialize Form Handler
-const formHandler = new FormHandler();
+// Initialize Email Form Handler (replace the old FormHandler)
+const emailFormHandler = new EmailFormHandler();
 
 // Performance Optimizations
 class PerformanceOptimizer {
