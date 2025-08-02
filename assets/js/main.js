@@ -437,8 +437,8 @@ class EmailFormHandler {
             // Send email using EmailJS
             // Replace 'YOUR_SERVICE_ID' and 'YOUR_TEMPLATE_ID' with your actual EmailJS configuration
             const response = await emailjs.send(
-                'service_h6gjilr',
-                'template_b4lngg8',
+                'service_6rqy91s',
+                'template_v8zhd9c',
                 formData
             );
 
