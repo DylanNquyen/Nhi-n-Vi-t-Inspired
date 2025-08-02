@@ -9,6 +9,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- EmailJS CDN -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <!-- Google Maps API -->
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap"></script>
 </head>
 <body>
     <!-- Header -->
@@ -155,13 +157,7 @@
                         <i class="fas fa-map-marker-alt" style="color: var(--accent-gold); margin-right: 0.5rem;"></i>
                         Chúng tôi nằm tại trung tâm thành phố, dễ dàng tiếp cận bằng nhiều phương tiện giao thông
                     </p>
-                    <div style="background: #f0f0f0; height: 300px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--text-light);">
-                        <div style="text-align: center;">
-                            <i class="fas fa-map" style="font-size: 3rem; color: var(--accent-gold); margin-bottom: 1rem;"></i>
-                            <p>Bản đồ sẽ được hiển thị tại đây</p>
-                            <p style="font-size: 0.9rem;">(tích hợp Google Maps hoặc bản đồ khác)</p>
-                        </div>
-                    </div>
+                    <div id="map" style="height: 400px; border-radius: 10px; width: 100%;"></div>
                 </div>
             </div>
         </div>
@@ -301,5 +297,153 @@
     </div>
 
     <script src="assets/js/main.js"></script>
+    
+    <!-- Google Maps Initialization -->
+    <script>
+        function initMap() {
+            // Coordinates for A39, Nguyễn Sỹ Sách, Phường Tân Sơn, TP.HCM
+            // Approximate coordinates for the address (you should verify these for exact location)
+            const businessLocation = { lat: 10.7769, lng: 106.6951 };
+            
+            // Create map
+            const map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 16,
+                center: businessLocation,
+                styles: [
+                    {
+                        "featureType": "all",
+                        "elementType": "geometry.fill",
+                        "stylers": [
+                            {
+                                "weight": "2.00"
+                            }
+                        ]
+                    },
+                    {
+                        "featureType": "all",
+                        "elementType": "geometry.stroke",
+                        "stylers": [
+                            {
+                                "color": "#9c9c9c"
+                            }
+                        ]
+                    },
+                    {
+                        "featureType": "all",
+                        "elementType": "labels.text",
+                        "stylers": [
+                            {
+                                "visibility": "on"
+                            }
+                        ]
+                    },
+                    {
+                        "featureType": "landscape",
+                        "elementType": "all",
+                        "stylers": [
+                            {
+                                "color": "#f2f2f2"
+                            }
+                        ]
+                    },
+                    {
+                        "featureType": "road",
+                        "elementType": "all",
+                        "stylers": [
+                            {
+                                "saturation": -100
+                            },
+                            {
+                                "lightness": 45
+                            }
+                        ]
+                    },
+                    {
+                        "featureType": "water",
+                        "elementType": "all",
+                        "stylers": [
+                            {
+                                "color": "#46bcec"
+                            },
+                            {
+                                "visibility": "on"
+                            }
+                        ]
+                    }
+                ]
+            });
+            
+            // Create custom marker
+            const marker = new google.maps.Marker({
+                position: businessLocation,
+                map: map,
+                title: "Nhiên Việt Inspired",
+                animation: google.maps.Animation.DROP
+            });
+            
+            // Info window content
+            const infoWindowContent = `
+                <div style="max-width: 300px; font-family: Arial, sans-serif;">
+                    <h3 style="color: #2c5530; margin: 0 0 10px 0;">Nhiên Việt Inspired</h3>
+                    <p style="margin: 5px 0; color: #666;">
+                        <strong>Địa chỉ:</strong><br>
+                        A39, Nguyễn Sỹ Sách<br>
+                        Phường Tân Sơn, TP.HCM
+                    </p>
+                    <p style="margin: 5px 0; color: #666;">
+                        <strong>Điện thoại:</strong> 0347 965 648
+                    </p>
+                    <p style="margin: 5px 0; color: #666;">
+                        <strong>Email:</strong> dulichnhienviet@gmail.com
+                    </p>
+                    <p style="margin: 5px 0; color: #666;">
+                        <strong>Giờ hoạt động:</strong><br>
+                        Thứ 2 - Chủ nhật: 7:00 - 22:00
+                    </p>
+                    <div style="margin-top: 10px;">
+                        <a href="https://www.google.com/maps/dir//A39+Nguyễn+Sỹ+Sách+Phường+Tân+Sơn+TP.HCM" 
+                           target="_blank" 
+                           style="background: #2c5530; color: white; padding: 8px 15px; text-decoration: none; border-radius: 5px; font-size: 14px;">
+                           Chỉ đường
+                        </a>
+                    </div>
+                </div>
+            `;
+            
+            const infoWindow = new google.maps.InfoWindow({
+                content: infoWindowContent
+            });
+            
+            // Show info window when marker is clicked
+            marker.addListener("click", () => {
+                infoWindow.open(map, marker);
+            });
+            
+            // Show info window by default
+            infoWindow.open(map, marker);
+        }
+        
+        // Fallback if Google Maps fails to load
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                if (typeof google === 'undefined') {
+                    document.getElementById('map').innerHTML = `
+                        <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f0f0f0; border-radius: 10px;">
+                            <div style="text-align: center; color: #666;">
+                                <i class="fas fa-map" style="font-size: 3rem; color: #DAA520; margin-bottom: 1rem;"></i>
+                                <p>Không thể tải Google Maps</p>
+                                <p style="font-size: 0.9rem;">Vui lòng kiểm tra kết nối internet hoặc API key</p>
+                                <a href="https://www.google.com/maps/search/A39+Nguyễn+Sỹ+Sách+Phường+Tân+Sơn+TP.HCM" 
+                                   target="_blank" 
+                                   style="color: #2c5530; text-decoration: underline;">
+                                   Xem trên Google Maps
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                }
+            }, 3000);
+        });
+    </script>
 </body>
 </html> 
