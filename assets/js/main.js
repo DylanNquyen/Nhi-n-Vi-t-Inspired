@@ -14,29 +14,40 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-// Close mobile menu when clicking on a link
-const navLinks = document.querySelectorAll('.nav-menu a');
-navLinks.forEach(link => {
-    link.addEventListener('click', () => {
-        const navMenu = document.querySelector('.nav-menu');
-        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-        if (navMenu && mobileMenuBtn) {
-            navMenu.classList.remove('active');
-            mobileMenuBtn.classList.remove('active');
-        }
-    });
-});
-
 // Scroll to top button
 const scrollTopBtn = document.querySelector('.scroll-top');
+const header = document.querySelector('.header');
 
-window.addEventListener('scroll', () => {
-    if (window.pageYOffset > 300) {
-        scrollTopBtn.classList.add('visible');
-    } else {
-        scrollTopBtn.classList.remove('visible');
+let scrollFrame = null;
+const updateScrollState = () => {
+    const scrollPosition = window.pageYOffset;
+
+    if (scrollTopBtn) {
+        scrollTopBtn.classList.toggle('visible', scrollPosition > 300);
     }
-});
+
+    if (header) {
+        header.style.background = scrollPosition > 100
+            ? 'rgba(45, 90, 39, 0.95)'
+            : 'linear-gradient(135deg, var(--primary-green), var(--secondary-green))';
+    }
+
+    const hero = document.querySelector('.hero');
+    if (hero && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        hero.style.transform = `translateY(${scrollPosition * -0.5}px)`;
+    }
+
+    scrollFrame = null;
+};
+
+const requestScrollUpdate = () => {
+    if (scrollFrame === null) {
+        scrollFrame = requestAnimationFrame(updateScrollState);
+    }
+};
+
+window.addEventListener('scroll', requestScrollUpdate, { passive: true });
+requestScrollUpdate();
 
 if (scrollTopBtn) {
     scrollTopBtn.addEventListener('click', () => {
@@ -76,58 +87,6 @@ document.addEventListener('DOMContentLoaded', () => {
     animatedElements.forEach(el => {
         observer.observe(el);
     });
-});
-
-// Form validation and submission
-const contactForm = document.querySelector('.contact-form form');
-if (contactForm) {
-    contactForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        // Basic form validation
-        const name = this.querySelector('input[name="name"]').value.trim();
-        const email = this.querySelector('input[name="email"]').value.trim();
-        const message = this.querySelector('textarea[name="message"]').value.trim();
-        
-        if (!name || !email || !message) {
-            alert('Vui lòng điền đầy đủ thông tin!');
-            return;
-        }
-        
-        if (!isValidEmail(email)) {
-            alert('Vui lòng nhập email hợp lệ!');
-            return;
-        }
-        
-        // Simulate form submission
-        const submitBtn = this.querySelector('button[type="submit"]');
-        const originalText = submitBtn.textContent;
-        submitBtn.textContent = 'Đang gửi...';
-        submitBtn.disabled = true;
-        
-        setTimeout(() => {
-            alert('Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi sớm nhất có thể.');
-            this.reset();
-            submitBtn.textContent = originalText;
-            submitBtn.disabled = false;
-        }, 2000);
-    });
-}
-
-// Email validation function
-function isValidEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-}
-
-// Header background change on scroll
-const header = document.querySelector('.header');
-window.addEventListener('scroll', () => {
-    if (window.pageYOffset > 100) {
-        header.style.background = 'rgba(45, 90, 39, 0.95)';
-    } else {
-        header.style.background = 'linear-gradient(135deg, var(--primary-green), var(--secondary-green))';
-    }
 });
 
 // Service cards hover effect
@@ -189,16 +148,6 @@ const imageObserver = new IntersectionObserver((entries) => {
 
 images.forEach(img => imageObserver.observe(img));
 
-// Parallax effect for hero section
-window.addEventListener('scroll', () => {
-    const scrolled = window.pageYOffset;
-    const hero = document.querySelector('.hero');
-    if (hero) {
-        const rate = scrolled * -0.5;
-        hero.style.transform = `translateY(${rate}px)`;
-    }
-});
-
 // Add loading animation
 window.addEventListener('load', () => {
     document.body.classList.add('loaded');
@@ -236,6 +185,9 @@ class Toast {
     createToastContainer() {
         const container = document.createElement('div');
         container.id = 'toast-container';
+        container.setAttribute('role', 'status');
+        container.setAttribute('aria-live', 'polite');
+        container.setAttribute('aria-atomic', 'true');
         container.style.cssText = `
             position: fixed;
             top: 20px;
@@ -251,12 +203,20 @@ class Toast {
     show(message, type = 'info', duration = 3000) {
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
-        toast.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <span>${message}</span>
-                <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: white; cursor: pointer; font-size: 18px;">×</button>
-            </div>
-        `;
+        toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
+
+        const content = document.createElement('div');
+        content.style.cssText = 'display: flex; align-items: center; gap: 10px;';
+        const messageElement = document.createElement('span');
+        messageElement.textContent = message;
+        const closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.setAttribute('aria-label', 'Đóng thông báo');
+        closeButton.textContent = '×';
+        closeButton.style.cssText = 'background: none; border: none; color: white; cursor: pointer; font-size: 18px;';
+        closeButton.addEventListener('click', () => toast.remove());
+        content.append(messageElement, closeButton);
+        toast.appendChild(content);
         
         document.getElementById('toast-container').appendChild(toast);
         
@@ -286,7 +246,9 @@ class EmailFormHandler {
     initEmailJS() {
         // Initialize EmailJS with your public key
         // Replace 'YOUR_PUBLIC_KEY' with your actual EmailJS public key
-        emailjs.init('is48xsDmZIpobLamF');
+        if (window.emailjs) {
+            window.emailjs.init('is48xsDmZIpobLamF');
+        }
     }
 
     init() {
@@ -413,6 +375,7 @@ class EmailFormHandler {
         const originalText = submitBtn.textContent || submitBtn.innerText;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang gửi...';
         submitBtn.disabled = true;
+        submitBtn.setAttribute('aria-busy', 'true');
 
         try {
             // Collect form data
@@ -436,7 +399,11 @@ class EmailFormHandler {
 
             // Send email using EmailJS
             // Replace 'YOUR_SERVICE_ID' and 'YOUR_TEMPLATE_ID' with your actual EmailJS configuration
-            const response = await emailjs.send(
+            if (!window.emailjs) {
+                throw new Error('Email service is unavailable');
+            }
+
+            const response = await window.emailjs.send(
                 'service_6rqy91s',
                 'template_v8zhd9c',
                 formData
@@ -458,6 +425,7 @@ class EmailFormHandler {
             // Restore button state
             submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
+            submitBtn.setAttribute('aria-busy', 'false');
         }
     }
 }
@@ -533,7 +501,14 @@ class MobileMenu {
 
     init() {
         if (this.menuBtn && this.navMenu) {
+            this.lastFocusedElement = this.menuBtn;
+            this.menuBtn.setAttribute('aria-expanded', 'false');
+            this.menuBtn.setAttribute('aria-controls', 'primary-navigation');
             this.menuBtn.addEventListener('click', () => this.toggle());
+
+            this.navMenu.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => this.close());
+            });
             
             // Close menu when clicking outside
             document.addEventListener('click', (e) => {
@@ -545,15 +520,21 @@ class MobileMenu {
             // Close menu on escape key
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
-                    this.close();
+                    this.close(true);
                 }
             });
         }
     }
 
     toggle() {
-        this.navMenu.classList.toggle('active');
-        this.menuBtn.classList.toggle('active');
+        const isOpening = !this.navMenu.classList.contains('active');
+        if (isOpening) {
+            this.lastFocusedElement = document.activeElement;
+        }
+        this.navMenu.classList.toggle('active', isOpening);
+        this.menuBtn.classList.toggle('active', isOpening);
+        this.menuBtn.setAttribute('aria-expanded', String(isOpening));
+        this.menuBtn.setAttribute('aria-label', isOpening ? 'Đóng menu điều hướng' : 'Mở menu điều hướng');
         
         // Animate menu items
         const menuItems = this.navMenu.querySelectorAll('li');
@@ -564,11 +545,20 @@ class MobileMenu {
                 item.style.animation = '';
             }
         });
+
+        if (isOpening) {
+            this.navMenu.querySelector('a')?.focus();
+        }
     }
 
-    close() {
+    close(restoreFocus = false) {
         this.navMenu.classList.remove('active');
         this.menuBtn.classList.remove('active');
+        this.menuBtn.setAttribute('aria-expanded', 'false');
+        this.menuBtn.setAttribute('aria-label', 'Mở menu điều hướng');
+        if (restoreFocus) {
+            this.lastFocusedElement?.focus();
+        }
     }
 }
 

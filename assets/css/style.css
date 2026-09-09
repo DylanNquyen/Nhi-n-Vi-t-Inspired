@@ -429,8 +429,16 @@ p {
 
 .service-image {
     height: 200px;
-    background-size: cover;
-    background-position: center;
+    aspect-ratio: 8 / 5;
+    overflow: hidden;
+}
+
+.service-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
 }
 
 .service-content {
